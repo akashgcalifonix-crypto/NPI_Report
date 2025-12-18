@@ -3,269 +3,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Califonix NPI Advanced Report</title>
+    <title>Califonix NPI Final Report Tool</title>
+    <!-- PDF Generation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --p-green: #e2efda; --p-yellow: #fff2cc; --red-txt: #d93025; --green-txt: #188038; }
-        body { font-family: 'Segoe UI', Arial; background: #f0f2f5; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        :root {
+            --header-bg: #e2efda; /* Excel Light Green */
+            --type-bg: #fff2cc;   /* Excel Light Yellow */
+            --border-color: #000;
+            --primary: #0056b3;
+            --danger: #dc3545;
+            --success: #198754;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
         
-        /* Header */
-        .main-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0056b3; padding-bottom: 15px; margin-bottom: 20px; }
-        .main-header img { height: 60px; }
+        /* Main Layout */
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        /* Form Styling */
-        .card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; position: relative; background: #fafafa; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        label { font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        /* Headers */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; }
+        .logo { height: 60px; }
+        h2 { margin: 0; color: #333; }
+
+        /* Input Grid */
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #555; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Stage Card Styling */
+        .stage-card { background: #fdfdfd; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-bottom: 15px; position: relative; border-left: 5px solid var(--primary); }
+        .remove-btn { position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
         
         /* Buttons */
-        .btn { padding: 10px 18px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; color: white; transition: 0.2s; }
-        .btn-blue { background: #0056b3; }
-        .btn-green { background: #28a745; }
-        .btn-red { background: #dc3545; }
-        .btn-yellow { background: #ffc107; color: #000; }
-        .btn:hover { opacity: 0.8; }
+        .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .btn-add { background: var(--success); }
+        .btn-preview { background: var(--primary); }
+        .btn-pdf { background: var(--danger); }
+        .btn-sheet { background: #217346; } /* Excel Green */
+        .btn-edit { background: #ffc107; color: black; }
+        .btn:hover { opacity: 0.9; }
 
-        /* Status Colors */
-        .status-open { color: var(--red-txt); font-weight: bold; }
-        .status-closed { color: var(--green-txt); font-weight: bold; }
+        /* Status Styling */
+        .status-open { color: red; font-weight: bold; }
+        .status-closed { color: green; font-weight: bold; }
 
-        /* Report Table Styling */
-        #printable-area { display: none; margin-top: 30px; }
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-        .report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-        .report-table th { background: #f2f2f2; }
-        .type-col { background: var(--p-yellow); font-weight: bold; }
-        .obs-text { color: #0056b3; white-space: pre-line; }
+        /* --- PRINT/PREVIEW STYLES --- */
+        #preview-section { display: none; }
+        #printable-area { background: white; padding: 10px; }
+        
+        .print-header { text-align: center; background: var(--header-bg); padding: 10px; border: 1px solid #000; margin-bottom: 0; }
+        .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 0; }
+        .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; }
+        
+        /* Column Widths & Colors */
+        .col-type { background: var(--type-bg); width: 10%; font-weight: bold; }
+        .col-process { width: 25%; text-align: left !important; }
+        .col-obs { width: 25%; text-align: left !important; color: blue; }
+        .col-img { width: 15%; }
+        
+        .table-img { max-height: 70px; max-width: 100%; border: 1px solid #ccc; display: block; margin: 2px auto; }
 
         /* History Section */
-        #history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 5px; }
+        #history-section { display: none; margin-top: 20px; }
+        .history-card { display: flex; justify-content: space-between; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; background: #fafafa; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Form Section -->
-    <div id="form-view">
-        <div class="main-header">
-            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Logo">
-            <h2 style="margin:0">NPI Observation Dashboard</h2>
-            <button class="btn btn-blue" onclick="showHistory()">View Saved Reports</button>
+    
+    <!-- === INPUT FORM SECTION === -->
+    <div id="form-section">
+        <div class="top-bar">
+            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="logo" alt="Logo">
+            <div>
+                <h2>NPI Observation Report</h2>
+                <div style="text-align: right; font-size: 12px; color: #666; margin-top: 5px;">Dashboard</div>
+            </div>
+            <button class="btn btn-primary" style="background:#6c757d;" onclick="toggleHistory()">📂 History / Saved Reports</button>
         </div>
 
-        <div class="grid">
-            <div><label>Date</label><input type="date" id="doc-date"></div>
-            <div><label>Model Name</label><input type="text" id="doc-model" placeholder="Ex: Airdopes 161"></div>
-            <div><label>Colour</label><input type="text" id="doc-colour" placeholder="Black"></div>
-            <div><label>ODM</label><input type="text" id="doc-odm" placeholder="ODM Name"></div>
+        <!-- Basic Info -->
+        <div class="input-grid">
+            <div class="form-group"><label>Date</label><input type="date" id="date" class="form-control"></div>
+            <div class="form-group"><label>Model Name</label><input type="text" id="model" class="form-control" placeholder="e.g. Airdopes 161 Pro"></div>
+            <div class="form-group"><label>Colour</label><input type="text" id="colour" class="form-control" placeholder="e.g. Black"></div>
+            <div class="form-group"><label>ODM</label><input type="text" id="odm" class="form-control" placeholder="e.g. Foxconn"></div>
         </div>
 
+        <hr>
+        
+        <!-- Dynamic Stages -->
         <div id="stages-container"></div>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="btn btn-green" onclick="addStage()">+ Add New Stage</button>
-            <button class="btn btn-blue" onclick="generatePreview()">Preview & Save</button>
+        <div class="btn-row">
+            <button class="btn btn-add" onclick="addStage()">+ Add Stage</button>
+            <button class="btn btn-preview" onclick="generatePreview()">Preview Report</button>
         </div>
     </div>
 
-    <!-- Preview & Download Section -->
-    <div id="preview-view" style="display:none;">
-        <div class="main-header">
-            <div>
-                <button class="btn btn-yellow" onclick="backToEdit()">← Edit Form</button>
-                <button class="btn btn-red" onclick="downloadPDF()">Download PDF (Landscape)</button>
-                <button class="btn btn-green" onclick="saveToSheet()">Save to Google Sheet</button>
-            </div>
-            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Logo">
+    <!-- === HISTORY SECTION === -->
+    <div id="history-section">
+        <h3>Saved Reports History</h3>
+        <input type="text" id="search-history" placeholder="Search by Model Name..." onkeyup="filterHistory()" class="form-control" style="margin-bottom: 10px; width: 300px;">
+        <div id="history-list"></div>
+        <button class="btn btn-edit" onclick="toggleHistory()" style="margin-top:10px;">Back to Form</button>
+    </div>
+
+    <!-- === PREVIEW & PRINT SECTION === -->
+    <div id="preview-section">
+        <div class="btn-row" style="border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px;">
+            <button class="btn btn-edit" onclick="editForm()">← Edit / Back</button>
+            <button class="btn btn-sheet" id="btn-save-sheet" onclick="sendToGoogleSheet()">Save to Google Sheet</button>
+            <button class="btn btn-pdf" onclick="downloadPDF()">Download PDF (Landscape)</button>
         </div>
 
-        <div id="printable-area" style="display:block;">
-            <div style="background:var(--p-green); padding:10px; border:1px solid #000; text-align:center;">
-                <h2 id="p-title" style="margin:5px 0;">REPORT</h2>
-                <p id="p-meta" style="margin:0; font-size:13px;"></p>
+        <div id="printable-area">
+            <!-- Header for PDF -->
+            <div class="print-header">
+                <table style="width:100%; border:none;">
+                    <tr style="border:none;">
+                        <td style="border:none; text-align:left; width:100px;">
+                            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
+                        </td>
+                        <td style="border:none; text-align:center;">
+                            <h2 style="margin:0; text-transform:uppercase; font-size:20px;" id="p-title">MODEL NAME NPI REPORT</h2>
+                        </td>
+                        <td style="border:none; text-align:right; font-size:12px; width:150px;">
+                            Date: <span id="p-date"></span><br>
+                            ODM: <span id="p-odm"></span>
+                        </td>
+                    </tr>
+                </table>
+                <div style="margin-top:5px; font-weight:bold;">Colour: <span id="p-colour"></span></div>
             </div>
-            <table class="report-table">
+
+            <!-- Main Table -->
+            <table class="print-table">
                 <thead>
                     <tr>
-                        <th>Type/Stage</th>
+                        <th style="background:#fff;">Type</th>
                         <th>Process</th>
-                        <th>Tools/Consumables</th>
+                        <th>Equipment/Tool</th>
+                        <th>Consumables</th>
                         <th>Curing</th>
                         <th>Observation</th>
                         <th>Status</th>
-                        <th>Reference Image</th>
+                        <th>Ref Image</th>
                     </tr>
                 </thead>
-                <tbody id="p-tbody"></tbody>
+                <tbody id="p-tbody">
+                    <!-- Rows will be filled by JS -->
+                </tbody>
             </table>
         </div>
     </div>
 
-    <!-- History / Model Wise Download Section -->
-    <div id="history-view" style="display:none;">
-        <h3>Saved Reports History</h3>
-        <input type="text" id="searchModel" placeholder="Search by Model Name..." onkeyup="filterHistory()" style="margin-bottom:15px; width:300px;">
-        <div id="history-list"></div>
-        <button class="btn btn-blue" onclick="backToForm()">Back to Form</button>
-    </div>
 </div>
 
 <script>
+    // --- CONFIGURATION ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAjd4PlhWtR-oO4-iS4Eh-fUYyvmFGs2OvOBnFk3Y4IAfNuv91KKhdziCIYHCEMwywSg/exec";
+    
     let stageCount = 0;
-    let savedReports = JSON.parse(localStorage.getItem('npi_reports') || '[]');
+    let historyData = JSON.parse(localStorage.getItem('npi_history')) || [];
 
-    window.onload = () => {
-        document.getElementById('doc-date').valueAsDate = new Date();
+    // Initialize
+    window.onload = function() {
+        document.getElementById('date').valueAsDate = new Date();
         addStage();
     };
 
+    // --- ADD STAGE FUNCTION ---
     function addStage() {
         stageCount++;
         const container = document.getElementById('stages-container');
         const div = document.createElement('div');
-        div.className = 'card';
+        div.className = 'stage-card';
+        div.id = `stage-${stageCount}`;
+        
         div.innerHTML = `
-            <div class="grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-                <div><label>Stage/Type</label><input type="text" class="s-type" value="Offline 0${stageCount}"></div>
-                <div><label>Tool Used</label><input type="text" class="s-tool"></div>
-                <div><label>Consumable</label><input type="text" class="s-con"></div>
-                <div><label>Status</label>
-                    <select class="s-status">
-                        <option value="OPEN">OPEN (Red)</option>
-                        <option value="CLOSED">CLOSED (Green)</option>
+            <button class="remove-btn" onclick="removeStage(${stageCount})">X</button>
+            
+            <div class="input-grid">
+                <div class="form-group">
+                    <label>Type / Stage No</label>
+                    <input type="text" class="inp-type form-control" value="Offline 0${stageCount}">
+                </div>
+                 <div class="form-group">
+                    <label>Status</label>
+                    <select class="inp-status form-control">
+                        <option value="OPEN" style="color:red; font-weight:bold;">OPEN (Issue)</option>
+                        <option value="CLOSED" style="color:green; font-weight:bold;">CLOSED (Ok)</option>
                     </select>
                 </div>
             </div>
-            <div class="grid" style="grid-template-columns: 2fr 2fr 1fr;">
-                <div><label>Process (As per SOP)</label><textarea class="s-proc" rows="2"></textarea></div>
-                <div><label>Observation</label><textarea class="s-obs" rows="2"></textarea></div>
-                <div><label>Images</label><input type="file" multiple accept="image/*" onchange="handleImgs(this, ${stageCount})"></div>
+
+            <div class="form-group">
+                <label>Process (SOP)</label>
+                <textarea class="inp-process form-control" rows="2"></textarea>
             </div>
-            <div id="img-preview-${stageCount}" style="display:flex; gap:5px; margin-top:5px;"></div>
+
+            <div class="input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="form-group"><label>Equipment/Tool</label><input type="text" class="inp-tool form-control"></div>
+                <div class="form-group"><label>Consumables</label><input type="text" class="inp-cons form-control"></div>
+                <div class="form-group"><label>Curing Time</label><input type="text" class="inp-cure form-control"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Observation</label>
+                <textarea class="inp-obs form-control" rows="2" placeholder="Start typing..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Reference Images (Multiple)</label>
+                <input type="file" class="form-control" multiple accept="image/*" onchange="previewImages(this, ${stageCount})">
+                <div id="img-prev-${stageCount}" style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;"></div>
+            </div>
         `;
         container.appendChild(div);
     }
 
-    function handleImgs(input, id) {
-        const prev = document.getElementById(`img-preview-${id}`);
-        prev.innerHTML = "";
-        Array.from(input.files).forEach(f => {
-            const r = new FileReader();
-            r.onload = e => prev.innerHTML += `<img src="${e.target.result}" style="height:50px; border:1px solid #ccc;">`;
-            r.readAsDataURL(f);
-        });
+    function removeStage(id) {
+        const el = document.getElementById(`stage-${id}`);
+        if(el) el.remove();
     }
 
+    // --- IMAGE HANDLING ---
+    function previewImages(input, id) {
+        const container = document.getElementById(`img-prev-${id}`);
+        container.innerHTML = "";
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.height = "50px";
+                    img.style.border = "1px solid #ccc";
+                    container.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    // --- PREVIEW GENERATION ---
     function generatePreview() {
-        const model = document.getElementById('doc-model').value || "NPI";
+        // Update Headers
+        const model = document.getElementById('model').value || "MODEL";
         document.getElementById('p-title').innerText = `${model} NPI OBSERVATION REPORT`;
-        document.getElementById('p-meta').innerText = `Date: ${document.getElementById('doc-date').value} | Colour: ${document.getElementById('doc-colour').value} | ODM: ${document.getElementById('doc-odm').value}`;
-        
+        document.getElementById('p-date').innerText = document.getElementById('date').value;
+        document.getElementById('p-odm').innerText = document.getElementById('odm').value;
+        document.getElementById('p-colour').innerText = document.getElementById('colour').value;
+
         const tbody = document.getElementById('p-tbody');
         tbody.innerHTML = "";
-        
-        document.querySelectorAll('.card').forEach(card => {
-            const status = card.querySelector('.s-status').value;
-            const statusClass = status === 'OPEN' ? 'status-open' : 'status-closed';
+
+        // Loop through inputs
+        const stages = document.querySelectorAll('.stage-card');
+        stages.forEach(card => {
+            const type = card.querySelector('.inp-type').value;
+            const status = card.querySelector('.inp-status').value;
+            const process = card.querySelector('.inp-process').value;
+            const tool = card.querySelector('.inp-tool').value;
+            const cons = card.querySelector('.inp-cons').value;
+            const cure = card.querySelector('.inp-cure').value;
+            const obs = card.querySelector('.inp-obs').value;
             
-            tbody.innerHTML += `
+            // Get Image HTML
+            const imgContainer = card.querySelector('[id^="img-prev-"]');
+            let imgHtml = "";
+            if(imgContainer) {
+                const imgs = imgContainer.getElementsByTagName('img');
+                for(let img of imgs) {
+                    imgHtml += `<img src="${img.src}" class="table-img">`;
+                }
+            }
+
+            // Determine Status Color Class
+            const statusClass = status === 'OPEN' ? 'status-open' : 'status-closed';
+
+            const row = `
                 <tr>
-                    <td class="type-col">${card.querySelector('.s-type').value}</td>
-                    <td>${card.querySelector('.s-proc').value}</td>
-                    <td>${card.querySelector('.s-tool').value}<br><small>${card.querySelector('.s-con').value}</small></td>
-                    <td>-</td>
-                    <td class="obs-text">>> ${card.querySelector('.s-obs').value}</td>
+                    <td class="col-type">${type}</td>
+                    <td class="col-process">${process}</td>
+                    <td>${tool}</td>
+                    <td>${cons}</td>
+                    <td>${cure}</td>
+                    <td class="col-obs">>> ${obs}</td>
                     <td class="${statusClass}">${status}</td>
-                    <td>${card.querySelector('[id^="img-preview"]').innerHTML}</td>
+                    <td class="col-img">${imgHtml}</td>
                 </tr>
             `;
+            tbody.innerHTML += row;
         });
 
-        document.getElementById('form-view').style.display = 'none';
-        document.getElementById('preview-view').style.display = 'block';
-        
-        // Auto-save to Local History
-        saveToLocal();
+        // Switch View
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('preview-section').style.display = 'block';
+
+        // Save to History automatically
+        saveToHistory(model);
     }
 
-    function saveToLocal() {
-        const report = {
+    function editForm() {
+        document.getElementById('form-section').style.display = 'block';
+        document.getElementById('preview-section').style.display = 'none';
+    }
+
+    // --- PDF DOWNLOAD ---
+    function downloadPDF() {
+        const element = document.getElementById('printable-area');
+        const model = document.getElementById('model').value || "NPI_Report";
+        
+        const opt = {
+            margin:       0.2,
+            filename:     `${model}_Report.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // --- GOOGLE SHEET INTEGRATION ---
+    function sendToGoogleSheet() {
+        const btn = document.getElementById('btn-save-sheet');
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        // Collect Data
+        const stages = [];
+        document.querySelectorAll('.stage-card').forEach(card => {
+            stages.push({
+                type: card.querySelector('.inp-type').value,
+                status: card.querySelector('.inp-status').value,
+                process: card.querySelector('.inp-process').value,
+                tool: card.querySelector('.inp-tool').value,
+                consumable: card.querySelector('.inp-cons').value,
+                observation: card.querySelector('.inp-obs').value
+            });
+        });
+
+        const payload = {
+            date: document.getElementById('date').value,
+            model: document.getElementById('model').value,
+            colour: document.getElementById('colour').value,
+            odm: document.getElementById('odm').value,
+            stages: stages
+        };
+
+        // Send Data
+        // Note: We use 'no-cors' because Google Scripts usually don't return proper CORS headers for simple execs
+        // This means we won't get a readable response, but the data will be sent.
+        
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(payload));
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: formData,
+            mode: 'no-cors' 
+        })
+        .then(() => {
+            alert("Data sent to Google Sheet successfully!");
+            btn.innerText = "Save to Google Sheet";
+            btn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Failed to connect. Check internet or URL.");
+            btn.innerText = "Save to Google Sheet";
+            btn.disabled = false;
+        });
+    }
+
+    // --- HISTORY MANAGEMENT ---
+    function saveToHistory(modelName) {
+        const currentData = {
             id: Date.now(),
-            model: document.getElementById('doc-model').value,
-            date: document.getElementById('doc-date').value,
+            model: modelName,
+            date: new Date().toLocaleDateString(),
             html: document.getElementById('printable-area').innerHTML
         };
-        savedReports.push(report);
-        localStorage.setItem('npi_reports', JSON.stringify(savedReports));
+        
+        // Add to top
+        historyData.unshift(currentData);
+        if(historyData.length > 20) historyData.pop(); // Keep last 20
+        localStorage.setItem('npi_history', JSON.stringify(historyData));
     }
 
-    function showHistory() {
-        document.getElementById('form-view').style.display = 'none';
-        document.getElementById('history-view').style.display = 'block';
-        renderHistory();
+    function toggleHistory() {
+        const section = document.getElementById('history-section');
+        const form = document.getElementById('form-section');
+        
+        if (section.style.display === 'none' || section.style.display === '') {
+            form.style.display = 'none';
+            section.style.display = 'block';
+            renderHistory();
+        } else {
+            section.style.display = 'none';
+            form.style.display = 'block';
+        }
     }
 
     function renderHistory() {
         const list = document.getElementById('history-list');
-        list.innerHTML = savedReports.map(r => `
-            <div class="history-item">
-                <span><strong>${r.model}</strong> (${r.date})</span>
+        list.innerHTML = "";
+        historyData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-card';
+            div.innerHTML = `
                 <div>
-                    <button class="btn btn-blue" onclick="loadReport(${r.id})">Download</button>
-                    <button class="btn btn-red" onclick="deleteReport(${r.id})">Delete</button>
+                    <strong>${item.model}</strong> <br>
+                    <small>${item.date}</small>
                 </div>
-            </div>
-        `).join('');
-    }
-
-    function loadReport(id) {
-        const r = savedReports.find(x => x.id === id);
-        document.getElementById('printable-area').innerHTML = r.html;
-        document.getElementById('history-view').style.display = 'none';
-        document.getElementById('preview-view').style.display = 'block';
-    }
-
-    function backToEdit() {
-        document.getElementById('form-view').style.display = 'block';
-        document.getElementById('preview-view').style.display = 'none';
-    }
-
-    function backToForm() {
-        document.getElementById('history-view').style.display = 'none';
-        document.getElementById('form-view').style.display = 'block';
-    }
-
-    function downloadPDF() {
-        const element = document.getElementById('printable-area');
-        const model = document.getElementById('doc-model').value || "Report";
-        html2pdf().set({
-            margin: 0.3,
-            filename: `${model}_NPI_Report.pdf`,
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-        }).from(element).save();
-    }
-
-    function saveToSheet() {
-        alert("Connecting to Google Sheets... (Make sure Script URL is added in code)");
-        // Logic same as previous version - use your Script URL here.
-    }
-
-    function deleteReport(id) {
-        savedReports = savedReports.filter(x => x.id !== id);
-        localStorage.setItem('npi_reports', JSON.stringify(savedReports));
-        renderHistory();
+                <div>
+                    <button class="btn btn-preview" onclick="loadHistoryItem(${item.id})">Load & Download</button>
+                    <button class="btn btn-pdf" onclick="deleteHistoryItem(${item.id})">Delete</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
     }
 
     function filterHistory() {
-        const val = document.getElementById('searchModel').value.toLowerCase();
-        const items = document.querySelectorAll('.history-item');
-        items.forEach(it => {
-            it.style.display = it.innerText.toLowerCase().includes(val) ? 'flex' : 'none';
+        const term = document.getElementById('search-history').value.toLowerCase();
+        const items = document.querySelectorAll('.history-card');
+        items.forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'flex' : 'none';
         });
+    }
+
+    function loadHistoryItem(id) {
+        const item = historyData.find(x => x.id === id);
+        if(item) {
+            document.getElementById('history-section').style.display = 'none';
+            document.getElementById('preview-section').style.display = 'block';
+            document.getElementById('printable-area').innerHTML = item.html;
+        }
+    }
+
+    function deleteHistoryItem(id) {
+        if(confirm("Delete this report from history?")) {
+            historyData = historyData.filter(x => x.id !== id);
+            localStorage.setItem('npi_history', JSON.stringify(historyData));
+            renderHistory();
+        }
     }
 </script>
 
