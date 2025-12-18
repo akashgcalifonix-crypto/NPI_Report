@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPI Observation Report - Califonix</title>
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f4f4;
+            --border-color: #ddd;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
+        
+        /* Container Styles */
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* Header */
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; }
+        .header img { max-height: 80px; margin-bottom: 10px; }
+        .header h2 { margin: 0; color: #333; }
+
+        /* Form Sections */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; }
+        
+        /* Global Info Grid */
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        @media (max-width: 600px) { .grid-row { grid-template-columns: 1fr 1fr; } }
+
+        /* Stage Box Styling */
+        .stage-wrapper { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fff; position: relative; border-left: 5px solid var(--primary-color); }
+        .remove-btn { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+        
+        /* Image Preview */
+        .image-preview-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .img-thumb { width: 80px; height: 80px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 15px; margin-top: 20px; justify-content: center; }
+        button { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-preview { background: var(--primary-color); color: white; }
+        .btn-pdf { background: #dc3545; color: white; }
+        .btn-sheet { background: #198754; color: white; }
+        .btn-edit { background: #ffc107; color: #000; }
+        button:hover { opacity: 0.9; }
+
+        /* Preview Area (Hidden by default) */
+        #preview-section { display: none; }
+        #form-section { display: block; }
+        
+        /* Print Layout */
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: top; }
+        .print-table th { background-color: #f0f0f0; width: 30%; }
+        .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .stage-print-block { margin-bottom: 20px; break-inside: avoid; border: 1px solid #000; padding: 10px; }
+        .stage-print-images { display: flex; gap: 10px; margin-top: 10px; }
+        .stage-print-images img { max-width: 150px; height: auto; border: 1px solid #ccc; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- === FORM SECTION === -->
+    <div id="form-section">
+        <div class="header">
+            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Califonix Logo">
+            <h2>NPI Observation Report Form</h2>
+        </div>
+
+        <!-- Basic Details -->
+        <div class="grid-row">
+            <div><label>Date</label><input type="date" id="date"></div>
+            <div><label>Model</label><input type="text" id="model" placeholder="Ex: AirBass Pro"></div>
+            <div><label>Colour</label><input type="text" id="colour" placeholder="Ex: Black"></div>
+            <div><label>ODM</label><input type="text" id="odm" placeholder="Ex: Foxconn"></div>
+        </div>
+
+        <hr>
+        <h3>Observation Stages</h3>
+        <div id="stages-container">
+            <!-- Stages will be added here via JS -->
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-add" onclick="addStage()">+ Add New Stage</button>
+        </div>
+        <br>
+        <div class="btn-group">
+            <button class="btn-preview" onclick="showPreview()">Preview Report</button>
+            <button class="btn-sheet" onclick="saveToGoogleSheet()">Save to Google Sheet</button>
+        </div>
+    </div>
+
+    <!-- === PREVIEW & PDF SECTION === -->
+    <div id="preview-section">
+        <div class="btn-group" style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+            <button class="btn-edit" onclick="editForm()">Back to Edit</button>
+            <button class="btn-pdf" onclick="downloadPDF()">Download PDF</button>
+        </div>
+
+        <div id="printable-area">
+            <!-- Header for PDF -->
+            <div class="print-header">
+                <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height: 60px;">
+                <div style="text-align: right;">
+                    <h2 style="margin:0;">NPI Observation Report</h2>
+                    <p style="margin:5px 0 0 0; font-size: 14px;">Califonix Tech</p>
+                </div>
+            </div>
+
+            <!-- Global Info Table -->
+            <table class="print-table" style="margin-bottom: 20px;">
+                <tr>
+                    <th>Date</th> <td id="p-date"></td>
+                    <th>Model</th> <td id="p-model"></td>
+                </tr>
+                <tr>
+                    <th>Colour</th> <td id="p-colour"></td>
+                    <th>ODM</th> <td id="p-odm"></td>
+                </tr>
+            </table>
+
+            <!-- Stages Content -->
+            <div id="p-stages-content"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let stageCount = 0;
+
+    // Initialize with one stage
+    window.onload = function() {
+        // Set today's date
+        document.getElementById('date').valueAsDate = new Date();
+        addStage();
+    };
+
+    // --- Function to Add New Stage ---
+    function addStage() {
+        stageCount++;
+        const container = document.getElementById('stages-container');
+        
+        const div = document.createElement('div');
+        div.className = 'stage-wrapper';
+        div.id = `stage-row-${stageCount}`;
+        
+        div.innerHTML = `
+            <button class="remove-btn" onclick="removeStage(${stageCount})">X Remove</button>
+            <div class="grid-row" style="grid-template-columns: 1fr 1fr;">
+                <div>
+                    <label>Type</label>
+                    <select class="inp-type">
+                        <option value="Earbuds">Earbuds</option>
+                        <option value="Charging Case">Charging Case</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Stage No.</label>
+                    <input type="text" class="inp-stage-no" value="${stageCount}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Process (As per SOP)</label>
+                <input type="text" class="inp-process">
+            </div>
+
+            <div class="grid-row">
+                <div><label>Equipment/Tool</label><input type="text" class="inp-tool"></div>
+                <div><label>Consumable Items</label><input type="text" class="inp-consumable"></div>
+                <div><label>Curing Time</label><input type="text" class="inp-curing"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Observation</label>
+                <textarea class="inp-observation" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Reference Images</label>
+                <input type="file" multiple accept="image/*" onchange="handleImagePreview(this, ${stageCount})">
+                <div class="image-preview-container" id="preview-img-${stageCount}"></div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeStage(id) {
+        const el = document.getElementById(`stage-row-${id}`);
+        if(el) el.remove();
+    }
+
+    // --- Image Preview Handler ---
+    function handleImagePreview(input, id) {
+        const container = document.getElementById(`preview-img-${id}`);
+        container.innerHTML = ''; // Clear old
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'img-thumb';
+                    container.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    // --- Show Preview ---
+    function showPreview() {
+        // Transfer Header Data
+        document.getElementById('p-date').innerText = document.getElementById('date').value;
+        document.getElementById('p-model').innerText = document.getElementById('model').value;
+        document.getElementById('p-colour').innerText = document.getElementById('colour').value;
+        document.getElementById('p-odm').innerText = document.getElementById('odm').value;
+
+        // Transfer Stages Data
+        const stageWrappers = document.getElementsByClassName('stage-wrapper');
+        const contentDiv = document.getElementById('p-stages-content');
+        contentDiv.innerHTML = ''; // Clear previous
+
+        Array.from(stageWrappers).forEach((stage, index) => {
+            const type = stage.querySelector('.inp-type').value;
+            const stageNo = stage.querySelector('.inp-stage-no').value;
+            const process = stage.querySelector('.inp-process').value;
+            const tool = stage.querySelector('.inp-tool').value;
+            const consumable = stage.querySelector('.inp-consumable').value;
+            const curing = stage.querySelector('.inp-curing').value;
+            const obs = stage.querySelector('.inp-observation').value;
+            
+            // Get images from the preview container directly
+            const imgContainer = stage.querySelector('.image-preview-container');
+            const imagesHtml = imgContainer ? imgContainer.innerHTML.replace(/img-thumb/g, '') : ''; // Clone HTML but remove thumb class for sizing in print
+
+            const stageBlock = `
+                <div class="stage-print-block">
+                    <h4 style="margin: 0 0 10px 0; background: #eee; padding: 5px;">Stage ${stageNo} (${type})</h4>
+                    <table class="print-table">
+                        <tr><th>Process</th><td>${process}</td></tr>
+                        <tr><th>Equipment</th><td>${tool}</td></tr>
+                        <tr><th>Consumable</th><td>${consumable}</td></tr>
+                        <tr><th>Curing Time</th><td>${curing}</td></tr>
+                        <tr><th>Observation</th><td>${obs}</td></tr>
+                    </table>
+                    <div class="stage-print-images">
+                        ${imagesHtml}
+                    </div>
+                </div>
+            `;
+            contentDiv.innerHTML += stageBlock;
+        });
+
+        // Toggle Views
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('preview-section').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function editForm() {
+        document.getElementById('form-section').style.display = 'block';
+        document.getElementById('preview-section').style.display = 'none';
+    }
+
+    // --- Download PDF ---
+    function downloadPDF() {
+        const element = document.getElementById('printable-area');
+        const modelName = document.getElementById('model').value || 'Report';
+        
+        var opt = {
+            margin:       0.5,
+            filename:     `NPI_Report_${modelName}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // --- Save to Google Sheet (Logic) ---
+    function saveToGoogleSheet() {
+        // Note: Images cannot be sent easily to simple Google Sheet without Blob API/Drive API. 
+        // We will send text data only.
+        
+        const scriptURL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // <--- PASTE YOUR SCRIPT URL HERE
+        
+        if(scriptURL === 'YOUR_GOOGLE_SCRIPT_URL_HERE') {
+            alert("Please configure the Google Script URL in the code first!");
+            return;
+        }
+
+        const data = {
+            date: document.getElementById('date').value,
+            model: document.getElementById('model').value,
+            colour: document.getElementById('colour').value,
+            odm: document.getElementById('odm').value,
+            stages: []
+        };
+
+        const stageWrappers = document.getElementsByClassName('stage-wrapper');
+        Array.from(stageWrappers).forEach(stage => {
+            data.stages.push({
+                type: stage.querySelector('.inp-type').value,
+                stageNo: stage.querySelector('.inp-stage-no').value,
+                process: stage.querySelector('.inp-process').value,
+                observation: stage.querySelector('.inp-observation').value
+            });
+        });
+
+        // Sending data as JSON string to handle nested stages easily
+        const formData = new FormData();
+        formData.append('data', JSON.stringify(data));
+
+        fetch(scriptURL, { method: 'POST', body: formData})
+            .then(response => alert("Data Saved to Google Sheet Successfully!"))
+            .catch(error => console.error('Error!', error.message));
+    }
+</script>
+
+</body>
+</html>
