@@ -7,14 +7,7 @@
     <!-- PDF Generation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        :root {
-            --header-bg: #e2efda;
-            --type-bg: #fff2cc;
-            --border-color: #000;
-            --primary: #0056b3;
-            --danger: #dc3545;
-            --success: #198754;
-        }
+        :root { --header-bg: #e2efda; --type-bg: #fff2cc; --border-color: #000; --primary: #0056b3; --danger: #dc3545; --success: #198754; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; }
@@ -31,9 +24,10 @@
         .btn-pdf { background: var(--danger); }
         .btn-sheet { background: #217346; }
         .btn-edit { background: #ffc107; color: black; }
-        .btn:hover { opacity: 0.9; }
         .status-open { color: red; font-weight: bold; }
         .status-closed { color: green; font-weight: bold; }
+        
+        /* Preview & History Styles */
         #preview-section { display: none; }
         #printable-area { background: white; padding: 10px; }
         .print-header { text-align: center; background: var(--header-bg); padding: 10px; border: 1px solid #000; margin-bottom: 0; }
@@ -44,6 +38,7 @@
         .col-obs { width: 25%; text-align: left !important; color: blue; }
         .col-img { width: 15%; }
         .table-img { max-height: 70px; max-width: 100%; border: 1px solid #ccc; display: block; margin: 2px auto; }
+        
         #history-section { display: none; margin-top: 20px; }
         .history-card { display: flex; justify-content: space-between; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; background: #fafafa; }
     </style>
@@ -52,7 +47,7 @@
 
 <div class="container">
     
-    <!-- === INPUT FORM SECTION === -->
+    <!-- === FORM SECTION === -->
     <div id="form-section">
         <div class="top-bar">
             <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="logo" alt="Logo">
@@ -60,7 +55,7 @@
                 <h2>NPI Observation Report</h2>
                 <div style="text-align: right; font-size: 12px; color: #666; margin-top: 5px;">Dashboard</div>
             </div>
-            <button class="btn btn-primary" style="background:#6c757d;" onclick="toggleHistory()">📂 History / Saved Reports</button>
+            <button class="btn btn-primary" style="background:#6c757d;" onclick="toggleHistory()">📂 History</button>
         </div>
 
         <div class="input-grid">
@@ -80,17 +75,17 @@
     <!-- === HISTORY SECTION === -->
     <div id="history-section">
         <h3>Saved Reports History</h3>
-        <input type="text" id="search-history" placeholder="Search by Model Name..." onkeyup="filterHistory()" class="form-control" style="margin-bottom: 10px; width: 300px;">
+        <input type="text" id="search-history" placeholder="Search Model..." onkeyup="filterHistory()" class="form-control" style="width: 300px; margin-bottom: 10px;">
         <div id="history-list"></div>
         <button class="btn btn-edit" onclick="toggleHistory()" style="margin-top:10px;">Back to Form</button>
     </div>
 
-    <!-- === PREVIEW & PRINT SECTION === -->
+    <!-- === PREVIEW SECTION === -->
     <div id="preview-section">
         <div class="btn-row" style="border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px;">
             <button class="btn btn-edit" onclick="editForm()">← Edit / Back</button>
             <button class="btn btn-sheet" id="btn-save-sheet" onclick="sendToGoogleSheet()">Save to Google Sheet</button>
-            <button class="btn btn-pdf" onclick="downloadPDF()">Download PDF (Landscape)</button>
+            <button class="btn btn-pdf" onclick="downloadPDF()">Download PDF</button>
         </div>
 
         <div id="printable-area">
@@ -112,10 +107,7 @@
             </div>
             <table class="print-table">
                 <thead>
-                    <tr>
-                        <th style="background:#fff;">Type</th><th>Process</th><th>Equipment/Tool</th><th>Consumables</th>
-                        <th>Curing</th><th>Observation</th><th>Status</th><th>Ref Image</th>
-                    </tr>
+                    <tr><th>Type</th><th>Process</th><th>Equipment/Tool</th><th>Consumables</th><th>Curing</th><th>Observation</th><th>Status</th><th>Ref Image</th></tr>
                 </thead>
                 <tbody id="p-tbody"></tbody>
             </table>
@@ -124,7 +116,7 @@
 </div>
 
 <script>
-    // --- YAHAN APNA URL CHECK KAREIN ---
+    // --- ✅ AAPKA UPDATED URL ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwq1XXNbNiEm5-LeUmkc24e4vE7WxR-MxHaYyTOdAG7darrpkydnm86AcaERnFzwh-fjA/exec";
     
     let stageCount = 0;
@@ -141,7 +133,6 @@
         const div = document.createElement('div');
         div.className = 'stage-card';
         div.id = `stage-${stageCount}`;
-        
         div.innerHTML = `
             <button class="remove-btn" onclick="removeStage(${stageCount})">X</button>
             <div class="input-grid">
@@ -235,75 +226,79 @@
 
     function downloadPDF() {
         const element = document.getElementById('printable-area');
-        const model = document.getElementById('model').value || "NPI_Report";
+        const model = document.getElementById('model').value || "Report";
         const opt = { margin: 0.2, filename: `${model}_Report.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } };
         html2pdf().set(opt).from(element).save();
     }
 
-    // --- IMPORTANT: FIXED GOOGLE SHEET SAVE FUNCTION ---
+    // --- 🔥 MAIN SAVING FUNCTION (FIXED) 🔥 ---
     async function sendToGoogleSheet() {
         const btn = document.getElementById('btn-save-sheet');
-        btn.innerText = "Processing Images & Uploading...";
+        btn.innerText = "⏳ Uploading Images & Data...";
         btn.disabled = true;
+        btn.style.backgroundColor = "#ffc107"; // Loading color
 
-        const stages = [];
-        const cards = document.querySelectorAll('.stage-card');
+        try {
+            const stages = [];
+            const cards = document.querySelectorAll('.stage-card');
 
-        // Loop through each stage to collect data AND images
-        for (let card of cards) {
-            // Process Images
-            const fileInput = card.querySelector('.inp-img');
-            let imageFiles = [];
-            
-            if (fileInput.files.length > 0) {
-                for (let file of fileInput.files) {
-                    let base64 = await toBase64(file);
-                    imageFiles.push({ name: file.name, data: base64 });
+            // --- Async Loop to Process Images ---
+            for (let card of cards) {
+                const fileInput = card.querySelector('.inp-img');
+                let imageFiles = [];
+                
+                if (fileInput.files.length > 0) {
+                    for (let file of fileInput.files) {
+                        let base64 = await toBase64(file); // WAIT for conversion
+                        imageFiles.push({ name: file.name, data: base64 });
+                    }
                 }
+
+                stages.push({
+                    type: card.querySelector('.inp-type').value,
+                    status: card.querySelector('.inp-status').value,
+                    process: card.querySelector('.inp-process').value,
+                    tool: card.querySelector('.inp-tool').value,
+                    consumable: card.querySelector('.inp-cons').value,
+                    curing: card.querySelector('.inp-cure').value,
+                    observation: card.querySelector('.inp-obs').value,
+                    images: imageFiles // Sending Actual Data
+                });
             }
 
-            stages.push({
-                type: card.querySelector('.inp-type').value,
-                status: card.querySelector('.inp-status').value,
-                process: card.querySelector('.inp-process').value,
-                tool: card.querySelector('.inp-tool').value,
-                consumable: card.querySelector('.inp-cons').value,
-                curing: card.querySelector('.inp-cure').value,
-                observation: card.querySelector('.inp-obs').value,
-                images: imageFiles // Sending Image Data
+            const payload = {
+                date: document.getElementById('date').value,
+                model: document.getElementById('model').value,
+                colour: document.getElementById('colour').value,
+                odm: document.getElementById('odm').value,
+                stages: stages
+            };
+
+            const formData = new FormData();
+            formData.append('data', JSON.stringify(payload));
+
+            // --- SENDING DATA ---
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' // Critical for Google Scripts
             });
-        }
 
-        const payload = {
-            date: document.getElementById('date').value,
-            model: document.getElementById('model').value,
-            colour: document.getElementById('colour').value,
-            odm: document.getElementById('odm').value,
-            stages: stages
-        };
-
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(payload));
-
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            body: formData,
-            mode: 'no-cors' 
-        })
-        .then(() => {
             alert("✅ Data Saved to Google Sheet Successfully!");
             btn.innerText = "Save to Google Sheet";
+            btn.style.backgroundColor = "#217346"; // Success color
             btn.disabled = false;
-        })
-        .catch(error => {
+
+        } catch (error) {
             console.error('Error:', error);
-            alert("❌ Failed to connect. Please check internet.");
-            btn.innerText = "Save to Google Sheet";
+            alert("❌ Failed to save. Check Console for details.");
+            btn.innerText = "Try Again";
+            btn.style.backgroundColor = "#dc3545"; // Error color
             btn.disabled = false;
-        });
+        }
     }
 
-    // Helper Function to convert Image to Text (Base64)
+    // Helper: Convert File to Base64 (Essential for Drive Upload)
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -311,7 +306,7 @@
         reader.onerror = error => reject(error);
     });
 
-    // --- HISTORY MANAGEMENT ---
+    // --- History Logic ---
     function saveToHistory(modelName) {
         const currentData = { id: Date.now(), model: modelName, date: new Date().toLocaleDateString(), html: document.getElementById('printable-area').innerHTML };
         historyData.unshift(currentData);
@@ -322,7 +317,7 @@
     function toggleHistory() {
         const section = document.getElementById('history-section');
         const form = document.getElementById('form-section');
-        if (section.style.display === 'none' || section.style.display === '') {
+        if (section.style.display === 'none') {
             form.style.display = 'none'; section.style.display = 'block'; renderHistory();
         } else {
             section.style.display = 'none'; form.style.display = 'block';
@@ -342,8 +337,9 @@
 
     function filterHistory() {
         const term = document.getElementById('search-history').value.toLowerCase();
-        const items = document.querySelectorAll('.history-card');
-        items.forEach(item => { item.style.display = item.innerText.toLowerCase().includes(term) ? 'flex' : 'none'; });
+        document.querySelectorAll('.history-card').forEach(item => {
+            item.style.display = item.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+        });
     }
 
     function loadHistoryItem(id) {
@@ -356,14 +352,13 @@
     }
 
     function deleteHistoryItem(id) {
-        if(confirm("Delete?")) {
+        if(confirm("Delete this report?")) {
             historyData = historyData.filter(x => x.id !== id);
             localStorage.setItem('npi_history', JSON.stringify(historyData));
             renderHistory();
         }
     }
 </script>
+
 </body>
 </html>
-
-
