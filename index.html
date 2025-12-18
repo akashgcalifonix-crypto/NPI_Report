@@ -9,208 +9,214 @@
     <style>
         :root {
             --primary-color: #0056b3;
-            --secondary-color: #f4f4f4;
-            --border-color: #ddd;
+            --header-bg: #e2efda; /* Light Green */
+            --type-bg: #fff2cc;   /* Light Yellow */
+            --border-color: #000;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e9ecef; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
         
-        /* Container Styles */
-        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* Input Form Styling */
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .form-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); }
+        .form-header img { height: 60px; }
         
-        /* Header */
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; }
-        .header img { max-height: 80px; margin-bottom: 10px; }
-        .header h2 { margin: 0; color: #333; }
-
-        /* Form Sections */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; }
+        .input-group { margin-bottom: 15px; }
+        label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         
-        /* Global Info Grid */
-        .grid-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .grid-row { grid-template-columns: 1fr 1fr; } }
+        .stage-box { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; background: #fff; border-left: 5px solid var(--primary-color); position: relative; }
+        .btn-remove { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; padding: 3px 8px; cursor: pointer; }
 
-        /* Stage Box Styling */
-        .stage-wrapper { border: 1px solid #ccc; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fff; position: relative; border-left: 5px solid var(--primary-color); }
-        .remove-btn { position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+        .btn-row { text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 10px; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; color: white; }
+        .btn-add { background: #28a745; }
+        .btn-view { background: #0d6efd; }
+        .btn-pdf { background: #dc3545; }
+        .btn-back { background: #ffc107; color: black; }
         
-        /* Image Preview */
-        .image-preview-container { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-        .img-thumb { width: 80px; height: 80px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
-
-        /* Buttons */
-        .btn-group { display: flex; gap: 15px; margin-top: 20px; justify-content: center; }
-        button { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-add { background: #28a745; color: white; }
-        .btn-preview { background: var(--primary-color); color: white; }
-        .btn-pdf { background: #dc3545; color: white; }
-        .btn-sheet { background: #198754; color: white; }
-        .btn-edit { background: #ffc107; color: #000; }
-        button:hover { opacity: 0.9; }
-
-        /* Preview Area (Hidden by default) */
-        #preview-section { display: none; }
-        #form-section { display: block; }
+        /* PREVIEW & PRINT STYLING (Professional Table) */
+        #preview-section { display: none; background: white; padding: 20px; }
         
-        /* Print Layout */
-        .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; vertical-align: top; }
-        .print-table th { background-color: #f0f0f0; width: 30%; }
-        .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .stage-print-block { margin-bottom: 20px; break-inside: avoid; border: 1px solid #000; padding: 10px; }
-        .stage-print-images { display: flex; gap: 10px; margin-top: 10px; }
-        .stage-print-images img { max-width: 150px; height: auto; border: 1px solid #ccc; }
+        .report-header {
+            width: 100%;
+            background-color: var(--header-bg);
+            text-align: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0;
+        }
+        .report-header h2 { margin: 5px 0; color: #000; font-size: 22px; text-transform: uppercase; }
+        .logo-print { height: 50px; vertical-align: middle; margin-right: 15px; }
 
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: 'Arial', sans-serif;
+        }
+        .custom-table th, .custom-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .custom-table th {
+            background-color: white; /* Headers are white or custom */
+            font-weight: bold;
+            color: #000;
+        }
+        /* Specific Column Widths */
+        .w-type { width: 10%; background-color: var(--type-bg); }
+        .w-process { width: 25%; text-align: left; }
+        .w-tool { width: 10%; }
+        .w-consumable { width: 10%; }
+        .w-curing { width: 8%; }
+        .w-obs { width: 22%; text-align: left; color: blue; font-weight: 500; }
+        .w-img { width: 15%; }
+
+        /* Images in Table */
+        .table-img {
+            max-width: 100%;
+            max-height: 80px;
+            border: 1px solid #ccc;
+            display: block;
+            margin: 2px auto;
+        }
+
+        /* Image Thumbnails in Input Form */
+        .thumb-preview img { height: 50px; margin: 5px; border: 1px solid #ccc; }
+        
+        /* Grid Layout for Form */
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="main-container">
     
-    <!-- === FORM SECTION === -->
-    <div id="form-section">
-        <div class="header">
-            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Califonix Logo">
-            <h2>NPI Observation Report Form</h2>
+    <!-- === INPUT FORM === -->
+    <div id="input-section">
+        <div class="form-header">
+            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" alt="Logo">
+            <h3>Enter NPI Details</h3>
         </div>
 
-        <!-- Basic Details -->
-        <div class="grid-row">
+        <div class="grid-4">
             <div><label>Date</label><input type="date" id="date"></div>
-            <div><label>Model</label><input type="text" id="model" placeholder="Ex: AirBass Pro"></div>
-            <div><label>Colour</label><input type="text" id="colour" placeholder="Ex: Black"></div>
-            <div><label>ODM</label><input type="text" id="odm" placeholder="Ex: Foxconn"></div>
+            <div><label>Model Name</label><input type="text" id="model" placeholder="Ex: Tws_Airdopes -161 Pro"></div>
+            <div><label>Colour</label><input type="text" id="colour" placeholder="Black"></div>
+            <div><label>ODM</label><input type="text" id="odm" placeholder="Foxconn"></div>
         </div>
-
         <hr>
-        <h3>Observation Stages</h3>
-        <div id="stages-container">
-            <!-- Stages will be added here via JS -->
-        </div>
 
-        <div class="btn-group">
-            <button class="btn-add" onclick="addStage()">+ Add New Stage</button>
-        </div>
-        <br>
-        <div class="btn-group">
-            <button class="btn-preview" onclick="showPreview()">Preview Report</button>
-            <button class="btn-sheet" onclick="saveToGoogleSheet()">Save to Google Sheet</button>
+        <div id="stages-container"></div>
+
+        <div class="btn-row">
+            <button class="btn-add" onclick="addStage()">+ Add Stage</button>
+            <button class="btn-view" onclick="generatePreview()">Preview Report</button>
         </div>
     </div>
 
     <!-- === PREVIEW & PDF SECTION === -->
     <div id="preview-section">
-        <div class="btn-group" style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-            <button class="btn-edit" onclick="editForm()">Back to Edit</button>
-            <button class="btn-pdf" onclick="downloadPDF()">Download PDF</button>
+        <div class="btn-row" style="margin-bottom: 20px; justify-content: flex-start;">
+            <button class="btn-back" onclick="editForm()">Edit / Back</button>
+            <button class="btn-pdf" onclick="downloadLandscapePDF()">Download PDF (Landscape)</button>
         </div>
 
+        <!-- PRINTABLE AREA STARTS -->
         <div id="printable-area">
-            <!-- Header for PDF -->
-            <div class="print-header">
-                <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height: 60px;">
-                <div style="text-align: right;">
-                    <h2 style="margin:0;">NPI Observation Report</h2>
-                    <p style="margin:5px 0 0 0; font-size: 14px;">Califonix Tech</p>
+            <!-- Green Header Bar -->
+            <div class="report-header">
+                <!-- Using Flex to align Logo and Text -->
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="logo-print">
+                    <h2 id="print-title">MODEL NAME NPI OBSERVATION REPORT</h2>
+                </div>
+                <div style="font-size: 12px; margin-top: 5px;">
+                    Date: <span id="p-date"></span> | Colour: <span id="p-colour"></span> | ODM: <span id="p-odm"></span>
                 </div>
             </div>
 
-            <!-- Global Info Table -->
-            <table class="print-table" style="margin-bottom: 20px;">
-                <tr>
-                    <th>Date</th> <td id="p-date"></td>
-                    <th>Model</th> <td id="p-model"></td>
-                </tr>
-                <tr>
-                    <th>Colour</th> <td id="p-colour"></td>
-                    <th>ODM</th> <td id="p-odm"></td>
-                </tr>
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="background-color: #fff;">Type</th> <!-- Standard Header -->
+                        <th>Process</th>
+                        <th>Equipment/Tool Used</th>
+                        <th>Consumable Items</th>
+                        <th>Curing Time</th>
+                        <th>Observation</th>
+                        <th>Reference Image</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Rows will be injected here -->
+                </tbody>
             </table>
-
-            <!-- Stages Content -->
-            <div id="p-stages-content"></div>
         </div>
+        <!-- PRINTABLE AREA ENDS -->
     </div>
 
 </div>
 
 <script>
     let stageCount = 0;
-
-    // Initialize with one stage
+    
+    // Set default date
     window.onload = function() {
-        // Set today's date
         document.getElementById('date').valueAsDate = new Date();
-        addStage();
+        addStage(); // Add first stage automatically
     };
 
-    // --- Function to Add New Stage ---
     function addStage() {
         stageCount++;
         const container = document.getElementById('stages-container');
-        
         const div = document.createElement('div');
-        div.className = 'stage-wrapper';
-        div.id = `stage-row-${stageCount}`;
+        div.className = 'stage-box';
+        div.id = `stage-${stageCount}`;
         
         div.innerHTML = `
-            <button class="remove-btn" onclick="removeStage(${stageCount})">X Remove</button>
-            <div class="grid-row" style="grid-template-columns: 1fr 1fr;">
+            <button class="btn-remove" onclick="removeStage(${stageCount})">X</button>
+            <div class="grid-4">
                 <div>
-                    <label>Type</label>
-                    <select class="inp-type">
-                        <option value="Earbuds">Earbuds</option>
-                        <option value="Charging Case">Charging Case</option>
-                    </select>
+                    <label>Type / Stage No</label>
+                    <input type="text" class="inp-type" value="Offline 0${stageCount}" placeholder="Ex: Offline 01">
                 </div>
-                <div>
-                    <label>Stage No.</label>
-                    <input type="text" class="inp-stage-no" value="${stageCount}">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Process (As per SOP)</label>
-                <input type="text" class="inp-process">
-            </div>
-
-            <div class="grid-row">
                 <div><label>Equipment/Tool</label><input type="text" class="inp-tool"></div>
-                <div><label>Consumable Items</label><input type="text" class="inp-consumable"></div>
+                <div><label>Consumable</label><input type="text" class="inp-consumable"></div>
                 <div><label>Curing Time</label><input type="text" class="inp-curing"></div>
             </div>
-
-            <div class="form-group">
-                <label>Observation</label>
-                <textarea class="inp-observation" rows="3"></textarea>
+            <div style="margin-top:10px;">
+                <label>Process</label>
+                <textarea class="inp-process" rows="2"></textarea>
             </div>
-
-            <div class="form-group">
-                <label>Reference Images</label>
-                <input type="file" multiple accept="image/*" onchange="handleImagePreview(this, ${stageCount})">
-                <div class="image-preview-container" id="preview-img-${stageCount}"></div>
+            <div style="margin-top:10px;">
+                <label>Observation</label>
+                <textarea class="inp-obs" rows="2" style="color:blue;"></textarea>
+            </div>
+            <div style="margin-top:10px;">
+                <label>Images (Select Multiple)</label>
+                <input type="file" multiple accept="image/*" onchange="previewImages(this, ${stageCount})">
+                <div class="thumb-preview" id="img-prev-${stageCount}"></div>
             </div>
         `;
         container.appendChild(div);
     }
 
     function removeStage(id) {
-        const el = document.getElementById(`stage-row-${id}`);
-        if(el) el.remove();
+        document.getElementById(`stage-${id}`).remove();
     }
 
-    // --- Image Preview Handler ---
-    function handleImagePreview(input, id) {
-        const container = document.getElementById(`preview-img-${id}`);
-        container.innerHTML = ''; // Clear old
+    function previewImages(input, id) {
+        const container = document.getElementById(`img-prev-${id}`);
+        container.innerHTML = "";
         if (input.files) {
             Array.from(input.files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.createElement('img');
+                    const img = document.createElement("img");
                     img.src = e.target.result;
-                    img.className = 'img-thumb';
                     container.appendChild(img);
                 }
                 reader.readAsDataURL(file);
@@ -218,114 +224,74 @@
         }
     }
 
-    // --- Show Preview ---
-    function showPreview() {
-        // Transfer Header Data
+    function generatePreview() {
+        // 1. Update Header Info
+        const model = document.getElementById('model').value || "MODEL";
+        document.getElementById('print-title').innerText = `${model} NPI Observation Report`;
         document.getElementById('p-date').innerText = document.getElementById('date').value;
-        document.getElementById('p-model').innerText = document.getElementById('model').value;
         document.getElementById('p-colour').innerText = document.getElementById('colour').value;
         document.getElementById('p-odm').innerText = document.getElementById('odm').value;
 
-        // Transfer Stages Data
-        const stageWrappers = document.getElementsByClassName('stage-wrapper');
-        const contentDiv = document.getElementById('p-stages-content');
-        contentDiv.innerHTML = ''; // Clear previous
-
-        Array.from(stageWrappers).forEach((stage, index) => {
+        // 2. Build Table Rows
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = "";
+        
+        const stages = document.querySelectorAll('.stage-box');
+        
+        stages.forEach(stage => {
             const type = stage.querySelector('.inp-type').value;
-            const stageNo = stage.querySelector('.inp-stage-no').value;
             const process = stage.querySelector('.inp-process').value;
             const tool = stage.querySelector('.inp-tool').value;
             const consumable = stage.querySelector('.inp-consumable').value;
             const curing = stage.querySelector('.inp-curing').value;
-            const obs = stage.querySelector('.inp-observation').value;
+            const obs = stage.querySelector('.inp-obs').value;
             
-            // Get images from the preview container directly
-            const imgContainer = stage.querySelector('.image-preview-container');
-            const imagesHtml = imgContainer ? imgContainer.innerHTML.replace(/img-thumb/g, '') : ''; // Clone HTML but remove thumb class for sizing in print
+            // Get images
+            const imgContainer = stage.querySelector('.thumb-preview');
+            let imgHTML = "";
+            if(imgContainer) {
+                const imgs = imgContainer.getElementsByTagName('img');
+                for(let img of imgs) {
+                    imgHTML += `<img src="${img.src}" class="table-img">`;
+                }
+            }
 
-            const stageBlock = `
-                <div class="stage-print-block">
-                    <h4 style="margin: 0 0 10px 0; background: #eee; padding: 5px;">Stage ${stageNo} (${type})</h4>
-                    <table class="print-table">
-                        <tr><th>Process</th><td>${process}</td></tr>
-                        <tr><th>Equipment</th><td>${tool}</td></tr>
-                        <tr><th>Consumable</th><td>${consumable}</td></tr>
-                        <tr><th>Curing Time</th><td>${curing}</td></tr>
-                        <tr><th>Observation</th><td>${obs}</td></tr>
-                    </table>
-                    <div class="stage-print-images">
-                        ${imagesHtml}
-                    </div>
-                </div>
+            const row = `
+                <tr>
+                    <td class="w-type" style="background-color: #fff2cc;">${type}</td>
+                    <td class="w-process" style="text-align:left;">${process}</td>
+                    <td class="w-tool">${tool}</td>
+                    <td class="w-consumable">${consumable}</td>
+                    <td class="w-curing">${curing}</td>
+                    <td class="w-obs" style="text-align:left; color:blue;">>> ${obs}</td>
+                    <td class="w-img">${imgHTML}</td>
+                </tr>
             `;
-            contentDiv.innerHTML += stageBlock;
+            tbody.innerHTML += row;
         });
 
-        // Toggle Views
-        document.getElementById('form-section').style.display = 'none';
+        // 3. Toggle View
+        document.getElementById('input-section').style.display = 'none';
         document.getElementById('preview-section').style.display = 'block';
-        window.scrollTo(0,0);
     }
 
     function editForm() {
-        document.getElementById('form-section').style.display = 'block';
+        document.getElementById('input-section').style.display = 'block';
         document.getElementById('preview-section').style.display = 'none';
     }
 
-    // --- Download PDF ---
-    function downloadPDF() {
+    function downloadLandscapePDF() {
         const element = document.getElementById('printable-area');
-        const modelName = document.getElementById('model').value || 'Report';
+        const model = document.getElementById('model').value || "Report";
         
-        var opt = {
-            margin:       0.5,
-            filename:     `NPI_Report_${modelName}.pdf`,
+        const opt = {
+            margin:       0.2,
+            filename:     `${model}_NPI_Report.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } // Landscape Mode
         };
-        
         html2pdf().set(opt).from(element).save();
-    }
-
-    // --- Save to Google Sheet (Logic) ---
-    function saveToGoogleSheet() {
-        // Note: Images cannot be sent easily to simple Google Sheet without Blob API/Drive API. 
-        // We will send text data only.
-        
-        const scriptURL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // <--- PASTE YOUR SCRIPT URL HERE
-        
-        if(scriptURL === 'YOUR_GOOGLE_SCRIPT_URL_HERE') {
-            alert("Please configure the Google Script URL in the code first!");
-            return;
-        }
-
-        const data = {
-            date: document.getElementById('date').value,
-            model: document.getElementById('model').value,
-            colour: document.getElementById('colour').value,
-            odm: document.getElementById('odm').value,
-            stages: []
-        };
-
-        const stageWrappers = document.getElementsByClassName('stage-wrapper');
-        Array.from(stageWrappers).forEach(stage => {
-            data.stages.push({
-                type: stage.querySelector('.inp-type').value,
-                stageNo: stage.querySelector('.inp-stage-no').value,
-                process: stage.querySelector('.inp-process').value,
-                observation: stage.querySelector('.inp-observation').value
-            });
-        });
-
-        // Sending data as JSON string to handle nested stages easily
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(data));
-
-        fetch(scriptURL, { method: 'POST', body: formData})
-            .then(response => alert("Data Saved to Google Sheet Successfully!"))
-            .catch(error => console.error('Error!', error.message));
     }
 </script>
 
