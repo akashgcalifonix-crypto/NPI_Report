@@ -46,9 +46,21 @@
         .table-img { max-height: 70px; max-width: 100%; border: 1px solid #ccc; display: block; margin: 2px auto; }
         #history-section { display: none; margin-top: 20px; }
         .history-card { display: flex; justify-content: space-between; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; background: #fafafa; }
+        
+        /* Loading Spinner */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; color: white; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <h3>Saving Data to Google Sheet...</h3>
+    <p>Please wait (Large images may take time)</p>
+</div>
 
 <div class="container">
     
@@ -60,7 +72,7 @@
                 <h2>NPI Observation Report</h2>
                 <div style="text-align: right; font-size: 12px; color: #666; margin-top: 5px;">Dashboard</div>
             </div>
-            <button class="btn btn-primary" style="background:#6c757d;" onclick="toggleHistory()">📂 History / Saved Reports</button>
+            <button class="btn btn-edit" style="background:#6c757d; color:white;" onclick="toggleHistory()">📂 History / Saved Reports</button>
         </div>
 
         <div class="input-grid">
@@ -68,7 +80,7 @@
             <div class="form-group"><label>Model Name</label><input type="text" id="model" class="form-control" placeholder="e.g. Airdopes 161 Pro"></div>
             <div class="form-group"><label>Colour</label><input type="text" id="colour" class="form-control" placeholder="e.g. Black"></div>
             <div class="form-group"><label>ODM</label><input type="text" id="odm" class="form-control" placeholder="e.g. Foxconn"></div>
-			<div class="form-group"><label>Product Type</label><input type="text" id="Type" class="form-control" placeholder="e.g. Earbuds"></div>
+            <div class="form-group"><label>Product Type</label><input type="text" id="Type" class="form-control" placeholder="e.g. Earbuds"></div>
         </div>
         <hr>
         <div id="stages-container"></div>
@@ -125,9 +137,13 @@
 </div>
 
 <script>
-    // --- YAHAN APNA URL CHECK KAREIN ---
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIfDnHeLjxCyrS__iJhcEclG4Zc01x1zbUs2hnqVZ_2zLDZgT8anGtiG722XANQbUO6g/exec";
-    
+    // =========================================================================
+    //  ⚠️ IMPORTANT: PASTE YOUR NEW GOOGLE APPS SCRIPT URL BELOW
+    // =========================================================================
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIfDnHeLjxCyrS__iJhcEclG4Zc01x1zbUs2hnqVZ_2zLDZgT8anGtiG722XANQbUO6g/exec"; 
+    // ^ Upar wale URL ko replace karein agar aapne naya deploy kiya hai
+    // =========================================================================
+
     let stageCount = 0;
     let historyData = JSON.parse(localStorage.getItem('npi_history')) || [];
 
@@ -162,7 +178,7 @@
             </div>
             <div class="form-group"><label>Observation</label><textarea class="inp-obs form-control" rows="2" placeholder="Start typing..."></textarea></div>
             <div class="form-group">
-                <label>Reference Images (Multiple)</label>
+                <label>Reference Images (Max 3, avoid very large files)</label>
                 <input type="file" class="inp-img form-control" multiple accept="image/*" onchange="previewImages(this, ${stageCount})">
                 <div id="img-prev-${stageCount}" style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;"></div>
             </div>
@@ -241,70 +257,67 @@
         html2pdf().set(opt).from(element).save();
     }
 
-    // --- IMPORTANT: FIXED GOOGLE SHEET SAVE FUNCTION ---
+    // --- GOOGLE SHEET UPLOAD FUNCTION ---
     async function sendToGoogleSheet() {
-        const btn = document.getElementById('btn-save-sheet');
-        btn.innerText = "Processing Images & Uploading...";
-        btn.disabled = true;
+        const loading = document.getElementById('loading-overlay');
+        loading.style.display = 'flex'; // Show loading spinner
+        
+        try {
+            const stages = [];
+            const cards = document.querySelectorAll('.stage-card');
 
-        const stages = [];
-        const cards = document.querySelectorAll('.stage-card');
-
-        // Loop through each stage to collect data AND images
-        for (let card of cards) {
-            // Process Images
-            const fileInput = card.querySelector('.inp-img');
-            let imageFiles = [];
-            
-            if (fileInput.files.length > 0) {
-                for (let file of fileInput.files) {
-                    let base64 = await toBase64(file);
-                    imageFiles.push({ name: file.name, data: base64 });
+            for (let card of cards) {
+                const fileInput = card.querySelector('.inp-img');
+                let imageFiles = [];
+                
+                if (fileInput.files.length > 0) {
+                    for (let file of fileInput.files) {
+                        let base64 = await toBase64(file);
+                        imageFiles.push({ name: file.name, data: base64 });
+                    }
                 }
+
+                stages.push({
+                    type: card.querySelector('.inp-type').value,
+                    status: card.querySelector('.inp-status').value,
+                    process: card.querySelector('.inp-process').value,
+                    tool: card.querySelector('.inp-tool').value,
+                    consumable: card.querySelector('.inp-cons').value,
+                    curing: card.querySelector('.inp-cure').value,
+                    observation: card.querySelector('.inp-obs').value,
+                    images: imageFiles 
+                });
             }
 
-            stages.push({
-                type: card.querySelector('.inp-type').value,
-                status: card.querySelector('.inp-status').value,
-                process: card.querySelector('.inp-process').value,
-                tool: card.querySelector('.inp-tool').value,
-                consumable: card.querySelector('.inp-cons').value,
-                curing: card.querySelector('.inp-cure').value,
-                observation: card.querySelector('.inp-obs').value,
-                images: imageFiles // Sending Image Data
+            const payload = {
+                date: document.getElementById('date').value,
+                model: document.getElementById('model').value,
+                colour: document.getElementById('colour').value,
+                odm: document.getElementById('odm').value,
+                stages: stages
+            };
+
+            const formData = new FormData();
+            formData.append('data', JSON.stringify(payload));
+
+            // Use 'no-cors' to avoid browser blocking, but we won't get a JSON response back
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' 
             });
-        }
 
-        const payload = {
-            date: document.getElementById('date').value,
-            model: document.getElementById('model').value,
-            colour: document.getElementById('colour').value,
-            odm: document.getElementById('odm').value,
-            stages: stages
-        };
+            // Assuming success if fetch didn't throw an error
+            alert("✅ Data Sent to Server! (Check Google Sheet in 10-20 seconds)");
 
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(payload));
-
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            body: formData,
-            mode: 'no-cors' 
-        })
-        .then(() => {
-            alert("✅ Data Saved to Google Sheet Successfully!");
-            btn.innerText = "Save to Google Sheet";
-            btn.disabled = false;
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert("❌ Failed to connect. Please check internet.");
-            btn.innerText = "Save to Google Sheet";
-            btn.disabled = false;
-        });
+            alert("❌ Failed to send data. Check internet connection.");
+        } finally {
+            loading.style.display = 'none'; // Hide loading spinner
+        }
     }
 
-    // Helper Function to convert Image to Text (Base64)
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -366,10 +379,3 @@
 </script>
 </body>
 </html>
-
-	
-
-
-
-
-
