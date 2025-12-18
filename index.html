@@ -14,43 +14,54 @@
             --primary: #0056b3;
             --danger: #dc3545;
             --success: #198754;
+            --search: #6610f2;
         }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* Top Bar & Search */
         .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; }
-        .logo { height: 60px; }
+        .search-box { display: flex; gap: 10px; align-items: center; }
+        .search-inp { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; }
+
+        /* Form Grid */
         .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #555; }
         .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Stages */
         .stage-card { background: #fdfdfd; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-bottom: 15px; position: relative; border-left: 5px solid var(--primary); }
         .remove-btn { position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        
+        /* Buttons */
         .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
         .btn-add { background: var(--success); }
         .btn-preview { background: var(--primary); }
         .btn-pdf { background: var(--danger); }
         .btn-sheet { background: #217346; }
+        .btn-search { background: var(--search); }
         .btn-edit { background: #ffc107; color: black; }
         .btn:hover { opacity: 0.9; }
+
         .status-open { color: red; font-weight: bold; }
         .status-closed { color: green; font-weight: bold; }
+
+        /* Loading Spinner */
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; color: white; flex-direction: column; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Print Section */
         #preview-section { display: none; }
         #printable-area { background: white; padding: 10px; }
         .print-header { text-align: center; background: var(--header-bg); padding: 10px; border: 1px solid #000; margin-bottom: 0; }
         .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 0; }
         .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: center; vertical-align: middle; }
         .col-type { background: var(--type-bg); width: 10%; font-weight: bold; }
-        .col-process { width: 25%; text-align: left !important; }
-        .col-obs { width: 25%; text-align: left !important; color: blue; }
+        .col-obs { color: blue; text-align: left !important; }
         .col-img { width: 15%; }
         .table-img { max-height: 70px; max-width: 100%; border: 1px solid #ccc; display: block; margin: 2px auto; }
-        #history-section { display: none; margin-top: 20px; }
-        .history-card { display: flex; justify-content: space-between; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; background: #fafafa; }
-        
-        /* Loading Spinner */
-        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; color: white; flex-direction: column; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -58,8 +69,7 @@
 <!-- Loading Overlay -->
 <div id="loading-overlay">
     <div class="spinner"></div>
-    <h3>Saving Data to Google Sheet...</h3>
-    <p>Please wait (Large images may take time)</p>
+    <h3 id="loading-text">Processing...</h3>
 </div>
 
 <div class="container">
@@ -67,35 +77,29 @@
     <!-- === INPUT FORM SECTION === -->
     <div id="form-section">
         <div class="top-bar">
-            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="logo" alt="Logo">
-            <div>
-                <h2>NPI Observation Report</h2>
-                <div style="text-align: right; font-size: 12px; color: #666; margin-top: 5px;">Dashboard</div>
+            <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;" alt="Logo">
+            <h2>NPI Observation Tool</h2>
+            <div class="search-box">
+                <input type="text" id="search-model-inp" class="search-inp" placeholder="Search saved Model...">
+                <button class="btn btn-search" onclick="searchServer()">🔍 Search</button>
             </div>
-            <button class="btn btn-edit" style="background:#6c757d; color:white;" onclick="toggleHistory()">📂 History / Saved Reports</button>
         </div>
 
         <div class="input-grid">
             <div class="form-group"><label>Date</label><input type="date" id="date" class="form-control"></div>
-            <div class="form-group"><label>Model Name</label><input type="text" id="model" class="form-control" placeholder="e.g. Airdopes 161 Pro"></div>
+            <div class="form-group"><label>Model Name</label><input type="text" id="model" class="form-control" placeholder="e.g. Airdopes 161"></div>
+            <div class="form-group"><label>Product Type</label><input type="text" id="Type" class="form-control" placeholder="e.g. TWS / Neckband"></div>
             <div class="form-group"><label>Colour</label><input type="text" id="colour" class="form-control" placeholder="e.g. Black"></div>
             <div class="form-group"><label>ODM</label><input type="text" id="odm" class="form-control" placeholder="e.g. Foxconn"></div>
-            <div class="form-group"><label>Product Type</label><input type="text" id="Type" class="form-control" placeholder="e.g. Earbuds"></div>
         </div>
         <hr>
+        
         <div id="stages-container"></div>
+        
         <div class="btn-row">
             <button class="btn btn-add" onclick="addStage()">+ Add Stage</button>
-            <button class="btn btn-preview" onclick="generatePreview()">Preview Report</button>
+            <button class="btn btn-preview" onclick="generatePreview(false)">Preview Report</button>
         </div>
-    </div>
-
-    <!-- === HISTORY SECTION === -->
-    <div id="history-section">
-        <h3>Saved Reports History</h3>
-        <input type="text" id="search-history" placeholder="Search by Model Name..." onkeyup="filterHistory()" class="form-control" style="margin-bottom: 10px; width: 300px;">
-        <div id="history-list"></div>
-        <button class="btn btn-edit" onclick="toggleHistory()" style="margin-top:10px;">Back to Form</button>
     </div>
 
     <!-- === PREVIEW & PRINT SECTION === -->
@@ -103,7 +107,7 @@
         <div class="btn-row" style="border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 20px;">
             <button class="btn btn-edit" onclick="editForm()">← Edit / Back</button>
             <button class="btn btn-sheet" id="btn-save-sheet" onclick="sendToGoogleSheet()">Save to Google Sheet</button>
-            <button class="btn btn-pdf" onclick="downloadPDF()">Download PDF (Landscape)</button>
+            <button class="btn btn-pdf" onclick="downloadPDF()">Download PDF</button>
         </div>
 
         <div id="printable-area">
@@ -114,10 +118,10 @@
                             <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
                         </td>
                         <td style="border:none; text-align:center;">
-                            <h2 style="margin:0; text-transform:uppercase; font-size:20px;" id="p-title">MODEL NAME NPI REPORT</h2>
+                            <h2 style="margin:0; text-transform:uppercase; font-size:20px;" id="p-title">NPI OBSERVATION REPORT</h2>
                         </td>
                         <td style="border:none; text-align:right; font-size:12px; width:150px;">
-                            Date: <span id="p-date"></span><br>ODM: <span id="p-odm"></span>
+                            <span id="p-date"></span><br>ODM: <span id="p-odm"></span>
                         </td>
                     </tr>
                 </table>
@@ -126,7 +130,7 @@
             <table class="print-table">
                 <thead>
                     <tr>
-                        <th style="background:#fff;">Type</th><th>Process</th><th>Equipment/Tool</th><th>Consumables</th>
+                        <th style="background:#fff;">Type</th><th>Process</th><th>Tool</th><th>Consumables</th>
                         <th>Curing</th><th>Observation</th><th>Status</th><th>Ref Image</th>
                     </tr>
                 </thead>
@@ -138,14 +142,12 @@
 
 <script>
     // =========================================================================
-    //  ⚠️ IMPORTANT: PASTE YOUR NEW GOOGLE APPS SCRIPT URL BELOW
+    //  YOUR GOOGLE SCRIPT URL
     // =========================================================================
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIfDnHeLjxCyrS__iJhcEclG4Zc01x1zbUs2hnqVZ_2zLDZgT8anGtiG722XANQbUO6g/exec"; 
-    // ^ Upar wale URL ko replace karein agar aapne naya deploy kiya hai
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwzN0TxFMLT0LeznwNWBr3TU03Ye9D03LparEcqEWGXUkY0x1WxFJPKpKVCWmt-7uOb2w/exec"; 
     // =========================================================================
 
     let stageCount = 0;
-    let historyData = JSON.parse(localStorage.getItem('npi_history')) || [];
 
     window.onload = function() {
         document.getElementById('date').valueAsDate = new Date();
@@ -178,7 +180,7 @@
             </div>
             <div class="form-group"><label>Observation</label><textarea class="inp-obs form-control" rows="2" placeholder="Start typing..."></textarea></div>
             <div class="form-group">
-                <label>Reference Images (Max 3, avoid very large files)</label>
+                <label>Reference Images (Max 3)</label>
                 <input type="file" class="inp-img form-control" multiple accept="image/*" onchange="previewImages(this, ${stageCount})">
                 <div id="img-prev-${stageCount}" style="display:flex; gap:5px; margin-top:5px; flex-wrap:wrap;"></div>
             </div>
@@ -205,44 +207,70 @@
         }
     }
 
-    function generatePreview() {
-        const model = document.getElementById('model').value || "MODEL";
-        document.getElementById('p-title').innerText = `${model} NPI OBSERVATION REPORT`;
-        document.getElementById('p-date').innerText = document.getElementById('date').value;
-        document.getElementById('p-odm').innerText = document.getElementById('odm').value;
-        document.getElementById('p-colour').innerText = document.getElementById('colour').value;
-
-        const tbody = document.getElementById('p-tbody');
-        tbody.innerHTML = "";
-
-        const stages = document.querySelectorAll('.stage-card');
-        stages.forEach(card => {
-            const type = card.querySelector('.inp-type').value;
-            const status = card.querySelector('.inp-status').value;
-            const process = card.querySelector('.inp-process').value;
-            const tool = card.querySelector('.inp-tool').value;
-            const cons = card.querySelector('.inp-cons').value;
-            const cure = card.querySelector('.inp-cure').value;
-            const obs = card.querySelector('.inp-obs').value;
-            
-            const imgContainer = card.querySelector('[id^="img-prev-"]');
-            let imgHtml = "";
-            if(imgContainer) {
-                const imgs = imgContainer.getElementsByTagName('img');
-                for(let img of imgs) { imgHtml += `<img src="${img.src}" class="table-img">`; }
-            }
-
-            const statusClass = status === 'OPEN' ? 'status-open' : 'status-closed';
-            const row = `<tr>
-                <td class="col-type">${type}</td><td class="col-process">${process}</td><td>${tool}</td><td>${cons}</td><td>${cure}</td>
-                <td class="col-obs">>> ${obs}</td><td class="${statusClass}">${status}</td><td class="col-img">${imgHtml}</td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-
+    // --- PREVIEW LOGIC (Handles Local Form & Server Data) ---
+    function generatePreview(isServerData, data = null) {
         document.getElementById('form-section').style.display = 'none';
         document.getElementById('preview-section').style.display = 'block';
-        saveToHistory(model);
+        
+        // Hide "Save" button if viewing old data from server
+        document.getElementById('btn-save-sheet').style.display = isServerData ? 'none' : 'inline-block';
+
+        if (isServerData && data) {
+            // === SERVER DATA VIEW ===
+            const row1 = data[0];
+            document.getElementById('p-title').innerText = `${row1.model} NPI REPORT`;
+            document.getElementById('p-date').innerHTML = `Date: ${row1.date} <br> Type: ${row1.productType || ''}`; 
+            document.getElementById('p-odm').innerText = row1.odm;
+            document.getElementById('p-colour').innerText = row1.colour;
+
+            const tbody = document.getElementById('p-tbody');
+            tbody.innerHTML = "";
+            
+            data.forEach(row => {
+                let imgHtml = "";
+                if(row.images) {
+                    row.images.split(',').forEach(link => { if(link.trim()) imgHtml += `<img src="${link}" class="table-img"><br>`; });
+                }
+                const statusClass = row.status === 'OPEN' ? 'status-open' : 'status-closed';
+                tbody.innerHTML += `<tr>
+                    <td class="col-type">${row.type}</td><td class="col-process">${row.process}</td><td>${row.tool}</td><td>${row.consumable}</td><td>${row.curing}</td>
+                    <td class="col-obs">>> ${row.observation}</td><td class="${statusClass}">${row.status}</td><td class="col-img">${imgHtml}</td>
+                </tr>`;
+            });
+
+        } else {
+            // === LOCAL FORM VIEW ===
+            const model = document.getElementById('model').value || "MODEL";
+            const pType = document.getElementById('Type').value;
+            
+            document.getElementById('p-title').innerText = `${model} NPI OBSERVATION REPORT`;
+            document.getElementById('p-date').innerHTML = `${document.getElementById('date').value} <br> Type: ${pType}`;
+            document.getElementById('p-odm').innerText = document.getElementById('odm').value;
+            document.getElementById('p-colour').innerText = document.getElementById('colour').value;
+
+            const tbody = document.getElementById('p-tbody');
+            tbody.innerHTML = "";
+
+            const stages = document.querySelectorAll('.stage-card');
+            stages.forEach(card => {
+                const getVal = (cls) => card.querySelector('.' + cls).value;
+                const imgContainer = card.querySelector('[id^="img-prev-"]');
+                let imgHtml = "";
+                if(imgContainer) {
+                    const imgs = imgContainer.getElementsByTagName('img');
+                    for(let img of imgs) { imgHtml += `<img src="${img.src}" class="table-img">`; }
+                }
+
+                const status = getVal('inp-status');
+                const statusClass = status === 'OPEN' ? 'status-open' : 'status-closed';
+                
+                tbody.innerHTML += `<tr>
+                    <td class="col-type">${getVal('inp-type')}</td><td class="col-process">${getVal('inp-process')}</td>
+                    <td>${getVal('inp-tool')}</td><td>${getVal('inp-cons')}</td><td>${getVal('inp-cure')}</td>
+                    <td class="col-obs">>> ${getVal('inp-obs')}</td><td class="${statusClass}">${status}</td><td class="col-img">${imgHtml}</td>
+                </tr>`;
+            });
+        }
     }
 
     function editForm() {
@@ -257,11 +285,40 @@
         html2pdf().set(opt).from(element).save();
     }
 
-    // --- GOOGLE SHEET UPLOAD FUNCTION ---
+    // --- SEARCH OLD DATA ---
+    function searchServer() {
+        const modelName = document.getElementById('search-model-inp').value;
+        if (!modelName) return alert("Please enter a Model Name to search.");
+
+        const loading = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+        loading.style.display = 'flex';
+        loadingText.innerText = "Searching Server...";
+
+        fetch(`${GOOGLE_SCRIPT_URL}?action=search&model=${encodeURIComponent(modelName)}`)
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            if (data && data.length > 0) {
+                generatePreview(true, data); // Show Server Data
+            } else {
+                alert("❌ No report found for this model.");
+            }
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            console.error(error);
+            alert("❌ Search failed. Check internet.");
+        });
+    }
+
+    // --- SAVE TO GOOGLE SHEET ---
     async function sendToGoogleSheet() {
         const loading = document.getElementById('loading-overlay');
-        loading.style.display = 'flex'; // Show loading spinner
-        
+        const loadingText = document.getElementById('loading-text');
+        loading.style.display = 'flex';
+        loadingText.innerText = "Uploading Data & Images...";
+
         try {
             const stages = [];
             const cards = document.querySelectorAll('.stage-card');
@@ -292,29 +349,31 @@
             const payload = {
                 date: document.getElementById('date').value,
                 model: document.getElementById('model').value,
+                productType: document.getElementById('Type').value, // <--- Correctly sending Product Type
                 colour: document.getElementById('colour').value,
                 odm: document.getElementById('odm').value,
                 stages: stages
             };
 
-            const formData = new FormData();
-            formData.append('data', JSON.stringify(payload));
-
-            // Use 'no-cors' to avoid browser blocking, but we won't get a JSON response back
-            await fetch(GOOGLE_SCRIPT_URL, {
+            // Using URLSearchParams ensures standard POST request handled correctly by Google Script
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: formData,
-                mode: 'no-cors' 
+                body: new URLSearchParams({ data: JSON.stringify(payload) })
             });
 
-            // Assuming success if fetch didn't throw an error
-            alert("✅ Data Sent to Server! (Check Google Sheet in 10-20 seconds)");
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert("✅ Data Saved Successfully to Google Sheet!");
+            } else {
+                alert("❌ Error from Google: " + result.message);
+            }
 
         } catch (error) {
             console.error('Error:', error);
-            alert("❌ Failed to send data. Check internet connection.");
+            alert("❌ Failed to connect. Check URL or Internet.");
         } finally {
-            loading.style.display = 'none'; // Hide loading spinner
+            loading.style.display = 'none';
         }
     }
 
@@ -324,58 +383,6 @@
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
-
-    // --- HISTORY MANAGEMENT ---
-    function saveToHistory(modelName) {
-        const currentData = { id: Date.now(), model: modelName, date: new Date().toLocaleDateString(), html: document.getElementById('printable-area').innerHTML };
-        historyData.unshift(currentData);
-        if(historyData.length > 20) historyData.pop();
-        localStorage.setItem('npi_history', JSON.stringify(historyData));
-    }
-
-    function toggleHistory() {
-        const section = document.getElementById('history-section');
-        const form = document.getElementById('form-section');
-        if (section.style.display === 'none' || section.style.display === '') {
-            form.style.display = 'none'; section.style.display = 'block'; renderHistory();
-        } else {
-            section.style.display = 'none'; form.style.display = 'block';
-        }
-    }
-
-    function renderHistory() {
-        const list = document.getElementById('history-list');
-        list.innerHTML = "";
-        historyData.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'history-card';
-            div.innerHTML = `<div><strong>${item.model}</strong> <br><small>${item.date}</small></div><div><button class="btn btn-preview" onclick="loadHistoryItem(${item.id})">Load</button><button class="btn btn-pdf" onclick="deleteHistoryItem(${item.id})">Del</button></div>`;
-            list.appendChild(div);
-        });
-    }
-
-    function filterHistory() {
-        const term = document.getElementById('search-history').value.toLowerCase();
-        const items = document.querySelectorAll('.history-card');
-        items.forEach(item => { item.style.display = item.innerText.toLowerCase().includes(term) ? 'flex' : 'none'; });
-    }
-
-    function loadHistoryItem(id) {
-        const item = historyData.find(x => x.id === id);
-        if(item) {
-            document.getElementById('history-section').style.display = 'none';
-            document.getElementById('preview-section').style.display = 'block';
-            document.getElementById('printable-area').innerHTML = item.html;
-        }
-    }
-
-    function deleteHistoryItem(id) {
-        if(confirm("Delete?")) {
-            historyData = historyData.filter(x => x.id !== id);
-            localStorage.setItem('npi_history', JSON.stringify(historyData));
-            renderHistory();
-        }
-    }
 </script>
 </body>
 </html>
