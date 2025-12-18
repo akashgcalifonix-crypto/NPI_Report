@@ -46,6 +46,8 @@
     <!-- === FORM PAGE === -->
     <div id="form-section">
         <div class="top-bar">
+            <!-- Form Header Logo Optional: Uncomment below line to add logo here too -->
+            <!-- <img src="https://i.postimg.cc/5y7SN4xc/logo.png" height="40" style="margin-right:10px;"> -->
             <h2>NPI Observation Report</h2>
             <div>
                 <input type="text" id="search-inp" placeholder="Search Saved Model..." style="padding:8px;">
@@ -80,9 +82,16 @@
         </div>
 
         <div id="printable">
-            <div style="border:1px solid black; background:var(--header); padding:15px; text-align:center;">
-                <h2 style="margin:0;">NPI OBSERVATION REPORT</h2>
-                <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:13px;">
+            <div style="border:1px solid black; background:var(--header); padding:15px;">
+                
+                <!-- LOGO ADDED HERE -->
+                <div style="display:flex; align-items:center; border-bottom:1px solid #999; padding-bottom:10px; margin-bottom:10px;">
+                    <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px; margin-right:20px;" alt="Logo">
+                    <h2 style="margin:0; flex-grow:1; text-align:center;">NPI OBSERVATION REPORT</h2>
+                </div>
+                <!-- END LOGO SECTION -->
+
+                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:13px;">
                     <span id="pr-date"></span> <span id="pr-model"></span> <span id="pr-odm"></span>
                 </div>
             </div>
@@ -264,9 +273,15 @@
 
     function downloadPDF() {
         const el = document.getElementById('printable');
-        html2pdf().set({ margin:0.2, filename:'NPI_Report.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in',format:'a4',orientation:'landscape'} }).from(el).save();
+        // Added useCORS:true to ensure external logo loads in PDF
+        html2pdf().set({ 
+            margin: 0.2, 
+            filename: 'NPI_Report.pdf', 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true }, 
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } 
+        }).from(el).save();
     }
 </script>
 </body>
 </html>
-
