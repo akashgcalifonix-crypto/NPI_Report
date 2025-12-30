@@ -40,7 +40,7 @@
         .dash-table th { background-color: var(--primary); color: white; }
         .dash-table tr:hover { background-color: #f1f1f1; }
 
-        /* --- PDF & PRINT FIXES --- */
+        /* --- PDF & PRINT --- */
         #printable { width: 100%; background: white; }
         .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; table-layout: fixed; }
         .print-table th, .print-table td { border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; word-wrap: break-word; word-break: break-word; white-space: normal; }
@@ -54,7 +54,7 @@
         .status-OPEN { color: red; font-weight: bold; }
         .status-CLOSED { color: green; font-weight: bold; }
 
-        /* Sections Visibility */
+        /* Sections */
         #dashboard-section, #form-section, #preview-section { display: none; }
         
         /* Loader */
@@ -115,7 +115,7 @@
         </div>
     </div>
 
-    <!-- === PREVIEW & PDF PAGE === -->
+    <!-- === PREVIEW PAGE === -->
     <div id="preview-section">
         <div class="top-bar">
             <button class="btn btn-back" onclick="document.getElementById('preview-section').style.display='none'; document.getElementById('form-section').style.display='block';">← Back to Form</button>
@@ -151,13 +151,13 @@
 
 <script>
     // ===========================================
-    // ⚠️ REPLACE THIS WITH YOUR DEPLOYMENT URL
+    // ⚠️ PASTE YOUR NEW GOOGLE SCRIPT URL HERE 👇
     // ===========================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAlgu4ao926ZoMfnnZr5aqkuiM0zJpTw8G4GSTJX0WlcQFDCYuZlLIHc8slP84qiPV/exec"; 
     // ===========================================
 
     let stageCount = 0;
-    let allReports = []; 
+    let allReports = []; // Global variable to store data
 
     window.onload = () => { 
         loadDashboard(); 
@@ -245,7 +245,7 @@
         fetch(SCRIPT_URL + "?action=getAll")
         .then(r => r.json())
         .then(data => {
-            allReports = data; // Store all data in global variable
+            allReports = data; // Store data in Global Variable
             renderTable(data);
             document.getElementById('dashboard-section').style.display = 'block';
             document.getElementById('form-section').style.display = 'none';
@@ -255,8 +255,7 @@
         .catch(e => {
             document.getElementById('loader').style.display = 'none';
             console.error(e);
-            alert("Connection Error or Script Updated. Please Reload.");
-            showFormNew();
+            alert("Connection Failed. Check URL.");
         });
     }
 
@@ -267,7 +266,7 @@
         
         // Show latest first
         data.slice().reverse().forEach(row => {
-            // FIX: We now pass only the rowIndex (ID), NOT the full data string
+            // FIX: Pass ONLY rowIndex (ID) to buttons
             tbody.innerHTML += `
                 <tr>
                     <td>${new Date(row.date).toLocaleDateString()}</td>
@@ -290,30 +289,40 @@
         renderTable(filtered);
     }
 
+    // === NEW DELETE FUNCTION ===
     function deleteReport(rowIndex) {
-        if(!confirm("Delete this report from Dashboard?")) return;
+        if(!confirm("Are you sure you want to DELETE this report?")) return;
         document.getElementById('loader').style.display = 'flex';
+
         fetch(SCRIPT_URL, {
             method: 'POST',
             body: new URLSearchParams({ 
                 data: JSON.stringify({ rowIndex: rowIndex }), 
                 action: 'delete' 
             })
-        }).then(r => r.json()).then(json => {
-            alert(json.message);
-            loadDashboard();
+        })
+        .then(r => r.json())
+        .then(json => {
+            if(json.success) {
+                alert("Deleted Successfully!");
+                loadDashboard(); // Refresh
+            } else {
+                alert("Failed: " + json.message);
+                document.getElementById('loader').style.display = 'none';
+            }
+        })
+        .catch(e => {
+            alert("Error: " + e);
+            document.getElementById('loader').style.display = 'none';
         });
     }
 
-    // UPDATED: Now accepts rowIndex instead of full JSON string
+    // === NEW EDIT FUNCTION (Uses ID Lookup) ===
     function editReport(rowIndex) {
-        // Find the full data object from the global 'allReports' array
+        // Find data from global array
         const data = allReports.find(r => r.rowIndex == rowIndex);
         
-        if (!data) {
-            alert("Error: Data not found in memory. Please reload.");
-            return;
-        }
+        if (!data) { alert("Error: Data not found!"); return; }
 
         showFormNew();
         document.getElementById('edit-row-index').value = data.rowIndex;
@@ -338,7 +347,6 @@
         }
     }
 
-    // UPDATED: Now uses rowIndex
     function quickPreview(rowIndex) { 
         editReport(rowIndex); 
         generatePreview(); 
@@ -387,7 +395,7 @@
 
     async function saveData() {
         const modelName = document.getElementById('model').value.trim();
-        if(!modelName) { alert("Model Name is required to create a Sheet!"); return; }
+        if(!modelName) { alert("Model Name is required!"); return; }
 
         document.getElementById('loader').style.display = 'flex';
         
@@ -424,8 +432,13 @@
                 body: new URLSearchParams({ data: JSON.stringify(payload), action: actionType })
             });
             const json = await res.json();
-            alert(json.message);
-            loadDashboard(); 
+            if(json.success) {
+                alert(json.message);
+                loadDashboard(); 
+            } else {
+                alert("Failed: " + json.message);
+                document.getElementById('loader').style.display = 'none';
+            }
         } catch(e) {
             alert("Error: " + e);
             document.getElementById('loader').style.display = 'none';
