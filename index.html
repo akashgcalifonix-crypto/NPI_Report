@@ -40,36 +40,16 @@
         .dash-table th { background-color: var(--primary); color: white; }
         .dash-table tr:hover { background-color: #f1f1f1; }
 
-        /* --- PDF & PRINT FIXES (OVERLAP ISSUE SOLVED) --- */
-        #printable {
-            width: 100%;
-            background: white;
-        }
-        .print-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px; 
-            font-size: 11px; 
-            table-layout: fixed; /* Fixes column width */
-        }
-        .print-table th, .print-table td { 
-            border: 1px solid black; 
-            padding: 5px; 
-            text-align: center; 
-            vertical-align: top;
-            word-wrap: break-word; /* Breaks long words */
-            word-break: break-word; /* Prevents overflow */
-            white-space: normal;
-        }
-        /* Column Widths to prevent squeezing */
-        .print-table th:nth-child(1) { width: 8%; }  /* Type */
-        .print-table th:nth-child(2) { width: 20%; } /* Process */
-        .print-table th:nth-child(6) { width: 25%; } /* Observation */
-        .print-table th:nth-child(8) { width: 15%; } /* Image */
+        /* --- PDF & PRINT FIXES --- */
+        #printable { width: 100%; background: white; }
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; table-layout: fixed; }
+        .print-table th, .print-table td { border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; word-wrap: break-word; word-break: break-word; white-space: normal; }
+        .print-table th:nth-child(1) { width: 8%; }  
+        .print-table th:nth-child(2) { width: 20%; } 
+        .print-table th:nth-child(6) { width: 25%; } 
+        .print-table th:nth-child(8) { width: 15%; } 
 
-        /* Page Break Fix */
         tr { page-break-inside: avoid; }
-
         .tbl-img { max-height: 80px; max-width: 90%; display: block; margin: 0 auto; }
         .status-OPEN { color: red; font-weight: bold; }
         .status-CLOSED { color: green; font-weight: bold; }
@@ -171,7 +151,7 @@
 
 <script>
     // ===========================================
-    // ⚠️ REPLACE THIS WITH YOUR NEW DEPLOYMENT URL
+    // ⚠️ REPLACE THIS WITH YOUR DEPLOYMENT URL
     // ===========================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAlgu4ao926ZoMfnnZr5aqkuiM0zJpTw8G4GSTJX0WlcQFDCYuZlLIHc8slP84qiPV/exec"; 
     // ===========================================
@@ -265,7 +245,7 @@
         fetch(SCRIPT_URL + "?action=getAll")
         .then(r => r.json())
         .then(data => {
-            allReports = data;
+            allReports = data; // Store all data in global variable
             renderTable(data);
             document.getElementById('dashboard-section').style.display = 'block';
             document.getElementById('form-section').style.display = 'none';
@@ -274,6 +254,7 @@
         })
         .catch(e => {
             document.getElementById('loader').style.display = 'none';
+            console.error(e);
             alert("Connection Error or Script Updated. Please Reload.");
             showFormNew();
         });
@@ -286,7 +267,7 @@
         
         // Show latest first
         data.slice().reverse().forEach(row => {
-            let rowStr = encodeURIComponent(JSON.stringify(row));
+            // FIX: We now pass only the rowIndex (ID), NOT the full data string
             tbody.innerHTML += `
                 <tr>
                     <td>${new Date(row.date).toLocaleDateString()}</td>
@@ -294,8 +275,8 @@
                     <td>${row.productType}</td>
                     <td>${row.odm}</td>
                     <td>
-                        <button class="btn btn-preview" style="padding:4px 8px; font-size:11px;" onclick="quickPreview('${rowStr}')">View</button>
-                        <button class="btn btn-edit" onclick="editReport('${rowStr}')">Edit</button>
+                        <button class="btn btn-preview" style="padding:4px 8px; font-size:11px;" onclick="quickPreview(${row.rowIndex})">View</button>
+                        <button class="btn btn-edit" onclick="editReport(${row.rowIndex})">Edit</button>
                         <button class="btn btn-del" onclick="deleteReport(${row.rowIndex})">Del</button>
                     </td>
                 </tr>
@@ -324,12 +305,25 @@
         });
     }
 
-    function editReport(rowStr) {
-        const data = JSON.parse(decodeURIComponent(rowStr));
+    // UPDATED: Now accepts rowIndex instead of full JSON string
+    function editReport(rowIndex) {
+        // Find the full data object from the global 'allReports' array
+        const data = allReports.find(r => r.rowIndex == rowIndex);
+        
+        if (!data) {
+            alert("Error: Data not found in memory. Please reload.");
+            return;
+        }
+
         showFormNew();
         document.getElementById('edit-row-index').value = data.rowIndex;
-        const d = new Date(data.date);
-        document.getElementById('date').value = d.toISOString().split('T')[0];
+        try {
+            const d = new Date(data.date);
+            document.getElementById('date').value = d.toISOString().split('T')[0];
+        } catch(e) {
+            document.getElementById('date').valueAsDate = new Date();
+        }
+        
         document.getElementById('model').value = data.model;
         document.getElementById('pType').value = data.productType;
         document.getElementById('colour').value = data.colour;
@@ -342,6 +336,12 @@
         } else {
             addStage();
         }
+    }
+
+    // UPDATED: Now uses rowIndex
+    function quickPreview(rowIndex) { 
+        editReport(rowIndex); 
+        generatePreview(); 
     }
 
     function generatePreview() {
@@ -384,8 +384,6 @@
             `;
         });
     }
-
-    function quickPreview(rowStr) { editReport(rowStr); generatePreview(); }
 
     async function saveData() {
         const modelName = document.getElementById('model').value.trim();
